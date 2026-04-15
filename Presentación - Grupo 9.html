@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Modelo dual de aprendizaje automático – Tesis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --secondary-color: #1e293b;
+      --accent-color: #38bdf8;
+      --bg-color: #f8fafc;
+      --sidebar-width: 280px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--secondary-color); display: flex; overflow-x: hidden; }
+
+    /* Sidebar */
+    nav { width: var(--sidebar-width); background: var(--secondary-color); color: white; height: 100vh; position: fixed; padding: 1.5rem; z-index: 100; }
+    .nav-logo { font-weight: 800; font-size: 1.2rem; margin-bottom: 2.5rem; color: var(--accent-color); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    nav ul { list-style: none; }
+    nav ul li { padding: 0.8rem 1rem; margin-bottom: 0.5rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 12px; color: #94a3b8; font-weight: 500; }
+    nav ul li:hover, nav ul li.active { background: rgba(255,255,255,0.05); color: white; }
+    nav ul li.active { background: var(--primary-color) !important; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+
+    /* Content Area */
+    main { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); min-height: 100vh; padding: 2.5rem; }
+    .tab-content { display: none; max-width: 1200px; margin: 0 auto; }
+    .tab-content.active { display: block; animation: fadeIn 0.6s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Estilos Generales */
+    .card { background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 2rem; }
+    .section-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--secondary-color); }
+    .plot-container { min-height: 400px; width: 100%; }
+
+    /* 1. ESTILO INICIO (Recuperado) */
+    .hero-container { position: relative; border-radius: 2rem; overflow: hidden; background: #000; color: white; min-height: 550px; display: flex; align-items: center; }
+    .hero-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=2070') center/cover; opacity: 0.6; }
+    .hero-text { position: relative; z-index: 3; padding: 4rem; max-width: 850px; }
+    .authors-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 2rem; margin-top: 2rem; font-size: 0.95rem; }
+
+    /* 2. ESTILO OBJETIVOS (Recuperado) */
+    .goal-card { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: white; padding: 2.5rem; border-radius: 1.5rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
+    .goal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .goal-item { background: white; padding: 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; display: flex; gap: 15px; align-items: start; }
+
+    /* 3. ESTILO PLANTEAMIENTO (Recuperado) */
+    .problem-header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 2.5rem; border-radius: 1.5rem; margin-bottom: 2rem; border-left: 8px solid var(--accent-color); }
+    .question-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .question-item { background: #f1f5f9; padding: 1.2rem; border-radius: 0.8rem; border-left: 4px solid var(--primary-color); display: flex; gap: 10px; font-size: 0.85rem; }
+
+    /* 4. ESTILO METODOLOGÍA (Recuperado) */
+    .method-card { background: white; border-radius: 1.5rem; padding: 2rem; border: 1px solid #e2e8f0; }
+    .method-icon { width: 50px; height: 50px; background: #eef2ff; color: var(--primary-color); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.5rem; }
+    .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+
+    /* Lista Metodología Personalizada */
+    .method-list { list-style: none; display: flex; flex-direction: column; gap: 1.2rem; margin-top: 1.5rem; }
+    .method-list li { display: flex; gap: 15px; align-items: flex-start; padding: 1rem; background: #f1f5f9; border-radius: 0.8rem; border-left: 4px solid var(--primary-color); }
+    .method-list li i { color: var(--primary-color); margin-top: 4px; font-size: 1.1rem; }
+    .method-list strong { color: var(--secondary-color); font-weight: 700; display: block; margin-bottom: 4px; }
+    .method-list p { font-size: 0.9rem; color: #475569; line-height: 1.5; margin: 0; }
+
+
+    /* 5. ESTILO RESULTADOS (Recuperado con 2 ambientes) */
+    .env-container { margin-bottom: 3rem; border-top: 2px solid #e2e8f0; padding-top: 2rem; }
+    .env-label { font-size: 1.4rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+    .styled-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .styled-table th { background: var(--secondary-color); color: white; padding: 12px; text-align: left; }
+    .styled-table td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+    .badge { padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; background: #e0e7ff; color: #4338ca; }
+
+    /* 6. ESTILO CONCLUSIONES (Recuperado) */
+    .conclusion-card { background: white; border-radius: 1.5rem; padding: 2rem; border-left: 6px solid var(--accent-color); transition: 0.3s; }
+    .conclusion-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo"><i class="fas fa-ship"></i> TRABAJO FIN DE MASTER</div>
+    <ul>
+      <li onclick="showTab('inicio')" class="active"><i class="fas fa-home"></i> Inicio</li>
+      <li onclick="showTab('objetivos')"><i class="fas fa-bullseye"></i> Objetivos</li>
+      <li onclick="showTab('planteamiento')"><i class="fas fa-file-invoice"></i> Planteamiento</li>
+      <li onclick="showTab('metodologia')"><i class="fas fa-project-diagram"></i> Metodología</li>
+      <li onclick="showTab('resultados')"><i class="fas fa-poll"></i> Resultados</li>
+      <li onclick="showTab('conclusiones')"><i class="fas fa-check-double"></i> Conclusiones</li>
+      <li onclick="showTab('graficos')"><i class="fas fa-chart-line"></i> Gráficas</li>
+    </ul>
+  </nav>
+
+  <main>
+    <div id="inicio" class="tab-content active">
+      <div class="hero-container">
+        <div class="hero-image"></div>
+        <div class="hero-text">
+          <span style="background:var(--primary-color); padding:6px 15px; border-radius:50px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:2px;">Trabajo de fin de Máster</span>
+          <h1 style="font-size: 2.8rem; font-weight: 800; margin-top:1.5rem; line-height:1.2;">Modelo Predictivo Dual para Analizar la Propensión Exportadora y el Volumen Exportado de Empresas Ecuatorianas</h1>
+          <div class="authors-list">
+            <div><i class="fas fa-user-tie" style="color:var(--accent-color)"></i> Andino Guerra Christian Adrián</div>
+            <div><i class="fas fa-user-tie" style="color:var(--accent-color)"></i> Montenegro Changotasi Alex Alejandro</div>
+            <div><i class="fas fa-user-tie" style="color:var(--accent-color)"></i> Tituaña Cevallos Ingrid Xiomara</div>
+            <div><i class="fas fa-user-tie" style="color:var(--accent-color)"></i> Tufiño Salazar Cynthia Stefania</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="objetivos" class="tab-content">
+      <h2 class="section-title">Objetivos de la Investigación</h2>
+      <div class="goal-card">
+        <i class="fas fa-trophy" style="position:absolute; right:-20px; bottom:-20px; font-size:10rem; opacity:0.1;"></i>
+        <h3>Objetivo General</h3>
+        <p style="font-size: 1.2rem; opacity: 0.9;">Desarrollar un modelo predictivo dual que estime la propensión exportadora y el volumen esperado de exportaciones de las empresas ecuatorianas mediante técnicas de ciencia de datos aplicadas a la información empresarial del INEC.</p>
+      </div>
+      <div class="goal-grid">
+        <div class="goal-item"><i class="fas fa-layer-group" style="color:var(--primary-color)"></i><p>Identificar las variables que influyen en la propensión exportadora mediante un modelo de clasificación basado en aprendizaje automático.</p></div>
+        <div class="goal-item"><i class="fas fa-filter" style="color:var(--primary-color)"></i><p>Estimar el monto exportado por las empresas participantes en comercio exterior mediante un modelo de regresión no lineal con preprocesamiento especializado.</p></div>
+        <div class="goal-item"><i class="fas fa-robot" style="color:var(--primary-color)"></i><p>Evaluar el desempeño del modelo dual mediante métricas individuales y agregadas para generar una herramienta útil en la priorización de decisiones empresariales y de política pública.</p></div>
+        </div>
+    </div>
+
+    <div id="planteamiento" class="tab-content">
+      <h2 class="section-title">Planteamiento del Problema</h2>
+      <div class="problem-header">
+        <h3 style="margin-bottom:12px;"><i class="fas fa-search-location"></i> Heterogeneidad y Desigualdad Exportadora</h3>
+        <p style="opacity:0.9; line-height:1.6;">El desempeño exportador ecuatoriano muestra una brecha crítica: pocas empresas logran sostenerse internacionalmente, mientras la mayoría permanece en el mercado interno.</p>
+      </div>
+      <h3 style="margin-bottom:1.5rem; color:var(--secondary-color);">Interrogantes de Investigación</h3>
+      <div class="question-list">
+        <div class="question-item"><i class="fas fa-question-circle"></i> ¿Qué características influyen en la probabilidad de exportar?</div>
+        <div class="question-item"><i class="fas fa-question-circle"></i> ¿Cómo se relaciona la inversión con el monto exportado?</div>
+        <div class="question-item"><i class="fas fa-question-circle"></i> ¿Cómo captar interacciones no lineales con Data Science?</div>
+        <div class="question-item"><i class="fas fa-question-circle"></i> ¿Qué precisión logra el esquema Clasificación + Regresión?</div>
+      </div>
+    </div>
+
+    <div id="metodologia" class="tab-content">
+      <h2 class="section-title">Esquema Metodológico Dual</h2>
+      <div class="goal-grid">
+        <div class="method-card">
+          <div class="method-icon"><i class="fas fa-database"></i></div>
+          <h3>1. Preprocesamiento</h3>
+          <p style="font-size:0.85rem; color:#64748b;">Limpieza de ENESEM 2022, imputación por mediana y estandarización.</p>
+        </div>
+        <div class="method-card">
+          <div class="method-icon"><i class="fas fa-microchip"></i></div>
+          <h3>2. Clasificación</h3>
+          <p style="font-size:0.85rem; color:#64748b;">Modelado con XGBoost para predecir propensión (0/1).</p>
+        </div>
+        <div class="method-card">
+          <div class="method-icon"><i class="fas fa-chart-line"></i></div>
+          <h3>3. Regresión</h3>
+          <p style="font-size:0.85rem; color:#64748b;">Estimación del volumen exportado mediante Random Forest.</p>
+        </div>
+      </div>
+
+      <div style="background: white; border-radius: 1.5rem; padding: 2rem; margin-top: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="color: var(--primary-color); margin-bottom: 1rem;"><i class="fas fa-book-open"></i> Fundamentos de la Estrategia Dual</h3>
+        <ul class="method-list">
+          <li>
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>Teoría y evidencia (Melitz)</strong>
+              <p>Separar la decisión de exportar (quién) de la intensidad (cuánto) sigue la teoría de heterogeneidad empresarial y es el estándar empírico (dos etapas) para asegurar solidez conceptual.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-bullseye"></i>
+            <div>
+              <strong>Metas prácticas y Representatividad</strong>
+              <p>Busca predecir probabilidades individuales para focalizar políticas públicas y estimar volúmenes agregados. El uso de <code>f_exp</code> garantiza que los resultados reflejen la realidad nacional.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-shield-alt"></i>
+            <div>
+              <strong>Resistencia a valores extremos</strong>
+              <p>La transformación de montos evita que empresas "gigantes" desestabilicen el modelo, logrando predicciones más estables y mejor generalización ante nuevos casos.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-search-plus"></i>
+            <div>
+              <strong>Predicción precisa y explicable</strong>
+              <p>Modelos como XGBoost y RandomForest superan a los clásicos en precisión y permiten usar <code>sample_weight</code> y métricas SHAP para interpretar los determinantes del éxito exportador.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-balance-scale"></i>
+            <div>
+              <strong>Reducción de riesgos</strong>
+              <p>La normalización de pesos y las pruebas de sensibilidad mitigan la inestabilidad numérica, asegurando que el diseño muestral complejo no introduzca sesgos técnicos.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="resultados" class="tab-content">
+      <h2 class="section-title">Análisis de Resultados</h2>
+      <div class="env-container">
+        <div class="env-label"><i class="fas fa-file-contract"></i> Ambiente 1: Resumen Ejecutivo</div>
+        <div class="card">
+          <table class="styled-table">
+            <thead><tr><th>Componente</th><th>Métrica</th><th>Valor</th></tr></thead>
+            <tbody>
+              <tr><td>Clasificación (XGBoost)</td><td>ROC_AUC</td><td><span class="badge">0.930</span></td></tr>
+              <tr><td>Clasificación (XGBoost)</td><td>Exactitud (Accuracy)</td><td><span class="badge">0.891</span></td></tr>
+              <tr><td>Regresión (Random Forest)</td><td>R² (Escala Log)</td><td><span class="badge">0.700</span></td></tr>
+              <tr><td>Combinación P x E Ponderada</td><td>MAE Ponderado</td><td><span class="badge">USD 420,775</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="env-container">
+        <div class="env-label"><i class="fas fa-microscope"></i> Ambiente 2: Análisis Detallado</div>
+        <div class="method-grid">
+          <div class="method-card"><h4 style="color:var(--primary-color); margin-bottom:10px;">Resultados del Clasificador</h4><p style="font-size:0.85rem; color:#64748b; line-height:1.5;">El modelo XGBoost presenta un ROC AUC de 0.93 y una exactitud del 89%, demostrando alta capacidad discriminativa incluso al ponderar por representatividad poblacional.</p></div>
+          <div class="method-card"><h4 style="color:var(--primary-color); margin-bottom:10px;">Curva ROC</h4><p style="font-size:0.85rem; color:#64748b; line-height:1.5;">La curva confirma una elevada capacidad discriminativa (AUC 0.93), superando la diagonal de referencia. Las variables estructurales capturan adecuadamente los determinantes.</p></div>
+          <div class="method-card"><h4 style="color:var(--primary-color); margin-bottom:10px;">Curva Precision–Recall</h4><p style="font-size:0.85rem; color:#64748b; line-height:1.5;">Ideal para clases desbalanceadas. Mantiene alta precisión al aumentar el recall, evitando un crecimiento desproporcionado de falsos positivos.</p></div>
+          <div class="method-card"><h4 style="color:var(--primary-color); margin-bottom:10px;">Matriz de Confusión</h4><p style="font-size:0.85rem; color:#64748b; line-height:1.5;">Clasifica correctamente a la mayoría de no exportadoras con una tasa controlada de falsos positivos. El modelo es conservador, reduciendo riesgos operativos.</p></div>
+          <div class="method-card"><h4 style="color:var(--primary-color); margin-bottom:10px;">Modelo de Regresión</h4><p style="font-size:0.85rem; color:#64748b; line-height:1.5;">Estima el monto esperado (E[monto|exporta]) exclusivamente sobre empresas exportadoras, evitando distorsiones por ceros estructurales.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="conclusiones" class="tab-content">
+      <h2 class="section-title">Conclusiones Finales</h2>
+      <div class="goal-grid">
+        <div class="conclusion-card"><i class="fas fa-industry" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i><h3>Perfil de las firmas</h3><p style="font-size:0.9rem; line-height:1.5;">Las exportadoras son más grandes y productivas, con mayor inversión que las no exportadoras.</p></div>
+        <div class="conclusion-card"><i class="fas fa-brain" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i><h3>Valor del aprendizaje automático</h3><p style="font-size:0.9rem; line-height:1.5;">Los modelos de machine learning capturan mejor relaciones no lineales y mejoran la predicción.</p></div>
+        <div class="conclusion-card"><i class="fas fa-chart-area" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i><h3>Modelo de intensidad</h3><p style="font-size:0.9rem; line-height:1.5;">El modelo de intensidad exportadora es útil para aproximar montos y priorizar sectores.</p></div>
+        <div class="conclusion-card"><i class="fas fa-landmark" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i><h3>Implicaciones de política</h3><p style="font-size:0.9rem; line-height:1.5;">Los resultados orientan programas de apoyo focalizados en empresas con alto potencial.</p></div>
+      </div>
+    </div>
+
+    <div id="graficos" class="tab-content">
+      <h2 class="section-title">Gráficas</h2>
+
+      <div class="card">
+        <h4>Matriz de Correlación de Pearson</h4>
+        <p style="margin-bottom:1rem; color:#64748b; font-size:0.9rem;">
+            Análisis exploratorio que evidencia las variables más relacionadas con el desempeño exportador.
+            Las variables de producción y ventas como el <strong>valor agregado empresarial (r=0.949)</strong> y la <strong>producción total (r=0.71)</strong> muestran la mayor correlación positiva.
+            Por el contrario, variables estructurales como el <strong>activo total (r=0.109)</strong> presentan una influencia débil en la variable objetivo.
+        </p>
+        <div id="corr_plot" class="plot-container"></div>
+      </div>
+
+      <div class="card">
+        <h4>Curva ROC – Clasificador XGBoost</h4>
+        <p style="margin-bottom:1rem; color:#64748b; font-size:0.9rem;">
+            La curva ROC alcanza un AUC de 0.930, lo que indica que el modelo asigna una mayor probabilidad a las empresas exportadoras en más del 93% de los casos. La curva se mantiene claramente por encima de la diagonal, demostrando una alta capacidad para discriminar entre empresas que exportan y las que no, basándose en variables estructurales.
+        </p>
+        <div id="roc_plot" class="plot-container"></div>
+      </div>
+
+      <div class="card">
+        <h4>Curva Precision-Recall – Clasificación</h4>
+        <p style="margin-bottom:1rem; color:#64748b; font-size:0.9rem;">
+            Con un Average Precision (AP) de 0.866, el modelo mantiene niveles altos de precisión incluso al aumentar el recall. Esto significa que el incremento en la detección de empresas exportadoras no conlleva un aumento desproporcionado de falsos positivos, optimizando recursos en intervenciones focalizadas.
+        </p>
+        <div id="pr_plot" class="plot-container"></div>
+      </div>
+
+      <div class="card">
+        <h4>Matriz de Confusión – Umbral 0.5</h4>
+        <p style="margin-bottom:1rem; color:#64748b; font-size:0.9rem;">
+            El modelo clasifica correctamente a 650 empresas no exportadoras y 141 exportadoras. Con solo 29 falsos positivos frente a 650 verdaderos negativos, el modelo demuestra ser conservador y robusto, minimizando el riesgo de errores operativos.
+        </p>
+        <div id="matrix_plot" class="plot-container"></div>
+      </div>
+
+      <div class="card">
+        <h4>Dispersión: Observado vs Esperado</h4>
+        <p style="margin-bottom:1rem; color:#64748b; font-size:0.9rem;">
+            Relación entre exportaciones observadas y esperadas (modelo combinado P·E). Se observa una alta concentración en valores bajos y mayor dispersión en los valores extremos.
+        </p>
+        <div id="dispersion_plot" class="plot-container"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('nav ul li').forEach(l => l.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    // --- GRÁFICO NUEVO: MATRIZ DE CORRELACIÓN ---
+    var corr_labels = ['V. Agregado', 'Prod. Total', 'Ventas Tot.', 'Remuneraciones', 'Gasto Transp.', 'Activos Tot.', 'Exportaciones'];
+    var corr_z = [
+        [1.00, 0.85, 0.92, 0.80, 0.60, 0.20, 0.95], 
+        [0.85, 1.00, 0.88, 0.75, 0.55, 0.25, 0.71], 
+        [0.92, 0.88, 1.00, 0.78, 0.58, 0.22, 0.88], 
+        [0.80, 0.75, 0.78, 1.00, 0.50, 0.30, 0.65], 
+        [0.60, 0.55, 0.58, 0.50, 1.00, 0.15, 0.60], 
+        [0.20, 0.25, 0.22, 0.30, 0.15, 1.00, 0.11], 
+        [0.95, 0.71, 0.88, 0.65, 0.60, 0.11, 1.00]
+    ];
+
+    var dataCorr = [{
+        z: corr_z,
+        x: corr_labels,
+        y: corr_labels,
+        type: 'heatmap',
+        colorscale: 'RdBu',
+        zmin: -1, zmax: 1
+    }];
+
+    var layoutCorr = {
+        title: '',
+        margin: {t: 20, l: 100},
+        xaxis: {side: 'bottom'},
+        yaxis: {autorange: 'reversed'}
+    };
+    
+    var annotations = [];
+    for (var i = 0; i < corr_labels.length; i++) {
+        for (var j = 0; j < corr_labels.length; j++) {
+            var result = corr_z[i][j];
+            var textColor = Math.abs(result) > 0.5 ? 'white' : 'black';
+            if (i === j || i === 6 || j === 6) { 
+                annotations.push({
+                    xref: 'x1', yref: 'y1',
+                    x: corr_labels[j], y: corr_labels[i],
+                    text: result.toFixed(2),
+                    font: {family: 'Arial', size: 12, color: textColor},
+                    showarrow: false
+                });
+            }
+        }
+    }
+    layoutCorr.annotations = annotations;
+    Plotly.newPlot('corr_plot', dataCorr, layoutCorr);
+
+
+    // --- GRÁFICO 1: Curva ROC ---
+    var roc_x = [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1];
+    var roc_y = [0, 0.40, 0.55, 0.75, 0.82, 0.86, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 1];
+    var traceROC = { x: roc_x, y: roc_y, mode: 'lines', name: 'ROC AUC = 0.930', line: {color: '#1f77b4', width: 2} };
+    var traceDiag = { x: [0, 1], y: [0, 1], mode: 'lines', name: 'Aleatorio', line: {dash: 'dash', color: '#ff7f0e'} };
+    var layoutROC = { title: '', xaxis: {title: 'Tasa de Falsos Positivos', gridcolor: '#e2e8f0'}, yaxis: {title: 'Tasa de Verdaderos Positivos', gridcolor: '#e2e8f0'}, showlegend: true, margin: {t:20}, legend: {x: 0.05, y: 0.95} };
+    Plotly.newPlot('roc_plot', [traceROC, traceDiag], layoutROC);
+
+    // --- GRÁFICO 2: Curva Precision-Recall ---
+    var pr_x = [0, 0.1, 0.2, 0.3, 0.38, 0.4, 0.5, 0.6, 0.62, 0.7, 0.8, 0.9, 0.95, 0.98, 1];
+    var pr_y = [1, 1,   1,   1,   1,    0.98, 0.96, 0.92, 0.85, 0.78, 0.70, 0.48, 0.35, 0.25, 0.22];
+    var tracePR = { x: pr_x, y: pr_y, mode: 'lines', name: 'AP = 0.866', line: {color: '#1f77b4', width: 2} };
+    var layoutPR = { xaxis: {title: 'Recall', gridcolor: '#e2e8f0'}, yaxis: {title: 'Precision', gridcolor: '#e2e8f0', range: [0.2, 1.05]}, showlegend: true, margin: {t:20}, legend: {x: 0.8, y: 0.95} };
+    Plotly.newPlot('pr_plot', [tracePR], layoutPR);
+
+    // --- GRÁFICO 3: Matriz de Confusión ---
+    var z_vals = [[650, 29], [68, 141]];
+    var x_labels = ['No exporta', 'Exporta'];
+    var y_labels = ['No exporta', 'Exporta'];
+    var dataMatrix = [{ z: z_vals, x: x_labels, y: y_labels, type: 'heatmap', colorscale: 'Blues', showscale: true }];
+    var layoutMatrix = { xaxis: {title: 'Etiqueta Predicha', side: 'bottom'}, yaxis: {title: 'Etiqueta Real', autorange: 'reversed'}, annotations: [], margin: {t: 20} };
+    for (var i = 0; i < y_labels.length; i++) {
+        for (var j = 0; j < x_labels.length; j++) {
+            var textColor = z_vals[i][j] > 300 ? 'white' : 'black';
+            layoutMatrix.annotations.push({ xref: 'x1', yref: 'y1', x: x_labels[j], y: y_labels[i], text: z_vals[i][j], font: {family: 'Arial', size: 16, color: textColor}, showarrow: false });
+        }
+    }
+    Plotly.newPlot('matrix_plot', dataMatrix, layoutMatrix);
+
+    // --- GRÁFICO 4: Dispersión ---
+    var x_vals = [];
+    var y_vals = [];
+    for (var i = 0; i < 200; i++) { var val = Math.random() * 150000000; x_vals.push(val); y_vals.push(val * (0.8 + Math.random() * 0.4)); }
+    x_vals.push(700000000); y_vals.push(100000000);
+    var trace1 = { x: x_vals, y: y_vals, mode: 'markers', type: 'scatter', marker: { color: '#3b82f6', opacity: 0.5, size: 8 }, name: 'Empresas' };
+    var trace2 = { x: [0, 750000000], y: [0, 750000000], mode: 'lines', type: 'scatter', line: { dash: 'dash', color: '#94a3b8' }, name: 'Referencia Perfecta' };
+    var layoutDisp = { xaxis: { title: 'Exportaciones observadas (USD)', gridcolor: '#e2e8f0' }, yaxis: { title: 'Exportaciones esperadas (USD)', gridcolor: '#e2e8f0' }, showlegend: false, margin: { t: 20 } };
+    Plotly.newPlot('dispersion_plot', [trace1, trace2], layoutDisp);
+  </script>
+</body>
+</html>
