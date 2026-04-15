@@ -1,4 +1,4 @@
-# Modelo Predictivo Dual para Analizar la Propensión Exportadora y el Volumen Exportado de Empresas Ecuatorianas.
+# Modelo Predictivo para Analizar la Propensión Exportadora y el Volumen Exportado de Empresas Ecuatorianas.
 
 
 
